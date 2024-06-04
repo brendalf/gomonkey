@@ -2,7 +2,7 @@ package ast
 
 import (
 	"bytes"
-	"go-interpreter/token"
+	"gomonkey/token"
 	"strings"
 )
 

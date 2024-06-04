@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"go-interpreter/ast"
-	"go-interpreter/lexer"
-	"go-interpreter/token"
+	"gomonkey/ast"
+	"gomonkey/lexer"
+	"gomonkey/token"
 	"strconv"
 )
 
