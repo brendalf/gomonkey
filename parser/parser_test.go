@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gomonkey/ast"
 	"gomonkey/lexer"
+	"reflect"
 	"testing"
 )
 
@@ -34,53 +35,59 @@ func checkProgram(t *testing.T, program *ast.Program, size int) {
 }
 
 func TestLetStatements(t *testing.T) {
-	input := `
-  let x = 5;
-  let y = 10;
-  let foobar = 838383;
-  `
-
-	l := lexer.New(input)
-	p := New(l)
-
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-	checkProgram(t, program, 3)
-
 	tests := []struct {
+		expectedValue      interface{}
+		input              string
 		expectedIdentifier string
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{input: "let x = 5;", expectedIdentifier: "x", expectedValue: 5},
+		{input: "let y = true;", expectedIdentifier: "y", expectedValue: true},
+		{input: "let foobar = y;", expectedIdentifier: "foobar", expectedValue: "y"},
 	}
 
-	for i, tt := range tests {
-		stmt := program.Statements[i]
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+		checkProgram(t, program, 1)
+
+		stmt := program.Statements[0]
 
 		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+			return
+		}
+
+		val := stmt.(*ast.LetStatement).Value
+		if !testLiteralExpression(t, val, tt.expectedValue) {
 			return
 		}
 	}
 }
 
 func TestReturnStatements(t *testing.T) {
-	input := `
-return 5;
-return 10;
-return 993322;
-  `
+	tests := []struct {
+		expectedExpression reflect.Type
+		input              string
+	}{
+		{input: "return 5;", expectedExpression: reflect.TypeOf(&ast.IntegerLiteral{})},
+		{input: "return 5 * 5;", expectedExpression: reflect.TypeOf(&ast.InfixExpression{})},
+		{input: "return true;", expectedExpression: reflect.TypeOf(&ast.Boolean{})},
+		{input: "return add(5, 5);", expectedExpression: reflect.TypeOf(&ast.CallExpression{})},
+	}
 
-	l := lexer.New(input)
-	p := New(l)
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
 
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
-	checkProgram(t, program, 3)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+		checkProgram(t, program, 1)
 
-	for _, stmt := range program.Statements {
+		stmt := program.Statements[0]
+
 		returnStmt, ok := stmt.(*ast.ReturnStatement)
-
 		if !ok {
 			t.Errorf("stmt not *ast.returnStatement, got=%T", stmt)
 			continue
@@ -88,6 +95,10 @@ return 993322;
 
 		if returnStmt.TokenLiteral() != "return" {
 			t.Errorf("returnStmt.TokenLiteral not 'return', got=%q", returnStmt.TokenLiteral())
+		}
+
+		if reflect.TypeOf(returnStmt.ReturnValue) != tt.expectedExpression {
+			t.Errorf("return value is not %v, got=%T", tt.expectedExpression, returnStmt.ReturnValue)
 		}
 	}
 }
