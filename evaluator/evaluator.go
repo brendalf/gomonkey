@@ -3,6 +3,7 @@ package evaluator
 import (
 	"gomonkey/ast"
 	"gomonkey/object"
+	"gomonkey/token"
 )
 
 var (
@@ -22,6 +23,9 @@ func Eval(node ast.Node) object.Object {
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+	case *ast.PrefixExpression:
+		right := Eval(node.Right)
+		return evalPrefixExpression(node.Token.Type, right)
 	}
 
 	return nil
@@ -35,6 +39,39 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	}
 
 	return result
+}
+
+func evalPrefixExpression(operator token.TokenType, right object.Object) object.Object {
+	switch operator {
+	case token.BANG:
+		return evalBangOperatorExpression(right)
+	case token.MINUS:
+		return evalMinusPrefixOperatorExpression(right)
+	default:
+		return NULL
+	}
+}
+
+func evalBangOperatorExpression(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
+}
+
+func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
+	if right.Type() != object.INTEGER_OBJ {
+		return NULL
+	}
+
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {
