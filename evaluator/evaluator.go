@@ -45,6 +45,15 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	return result
 }
 
+func evalInfixExpression(operator token.TokenType, left object.Object, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntegerInfixExpression(operator, left, right)
+	default:
+		return NULL
+	}
+}
+
 func evalIntegerInfixExpression(operator token.TokenType, left object.Object, right object.Object) object.Object {
 	leftValue := left.(*object.Integer).Value
 	rightValue := right.(*object.Integer).Value
@@ -58,15 +67,14 @@ func evalIntegerInfixExpression(operator token.TokenType, left object.Object, ri
 		return &object.Integer{Value: leftValue * rightValue}
 	case token.SLASH:
 		return &object.Integer{Value: leftValue / rightValue}
-	default:
-		return NULL
-	}
-}
-
-func evalInfixExpression(operator token.TokenType, left object.Object, right object.Object) object.Object {
-	switch {
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntegerInfixExpression(operator, left, right)
+	case token.LT:
+		return nativeBoolToBooleanObject(leftValue < rightValue)
+	case token.GT:
+		return nativeBoolToBooleanObject(leftValue > rightValue)
+	case token.EQ:
+		return nativeBoolToBooleanObject(leftValue == rightValue)
+	case token.NOT_EQ:
+		return nativeBoolToBooleanObject(leftValue != rightValue)
 	default:
 		return NULL
 	}
