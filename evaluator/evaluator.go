@@ -26,9 +26,13 @@ func Eval(node ast.Node) object.Object {
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Token.Type, right)
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Token.Type, left, right)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func evalStatements(stmts []ast.Statement) object.Object {
@@ -39,6 +43,33 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	}
 
 	return result
+}
+
+func evalIntegerInfixExpression(operator token.TokenType, left object.Object, right object.Object) object.Object {
+	leftValue := left.(*object.Integer).Value
+	rightValue := right.(*object.Integer).Value
+
+	switch operator {
+	case token.PLUS:
+		return &object.Integer{Value: leftValue + rightValue}
+	case token.MINUS:
+		return &object.Integer{Value: leftValue - rightValue}
+	case token.ASTERISK:
+		return &object.Integer{Value: leftValue * rightValue}
+	case token.SLASH:
+		return &object.Integer{Value: leftValue / rightValue}
+	default:
+		return NULL
+	}
+}
+
+func evalInfixExpression(operator token.TokenType, left object.Object, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntegerInfixExpression(operator, left, right)
+	default:
+		return NULL
+	}
 }
 
 func evalPrefixExpression(operator token.TokenType, right object.Object) object.Object {
