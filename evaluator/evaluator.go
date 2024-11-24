@@ -38,6 +38,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		env.Set(node.Name.Value, val)
 
 		return evalIdentifier(node.Name, env)
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
@@ -128,8 +130,26 @@ func evalInfixExpression(operator token.TokenType, left object.Object, right obj
 		return evalIntegerInfixExpression(operator, left, right)
 	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
 		return evalBooleanInfixExpression(operator, left, right)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		return evalStringInfixExpression(operator, left, right)
 	case left.Type() != right.Type():
 		return newError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
+	default:
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
+func evalStringInfixExpression(operator token.TokenType, left object.Object, right object.Object) object.Object {
+	leftValue := left.(*object.String).Value
+	rightValue := right.(*object.String).Value
+
+	switch operator {
+	case token.PLUS:
+		return &object.String{Value: leftValue + rightValue}
+	case token.EQ:
+		return &object.Boolean{Value: leftValue == rightValue}
+	case token.NOT_EQ:
+		return &object.Boolean{Value: leftValue != rightValue}
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
