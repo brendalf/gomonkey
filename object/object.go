@@ -11,11 +11,12 @@ type ObjectType string
 
 const (
 	BOOLEAN_OBJ      = "BOOLEAN"
+	BUILTIN_OBJ      = "BUILTIN"
+	ERROR_OBJ        = "ERROR"
+	FUNCTION_OBJ     = "FUNCTION"
 	INTEGER_OBJ      = "INTEGER"
 	NULL_OBJ         = "NULL"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
-	ERROR_OBJ        = "ERROR"
-	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
 )
 
@@ -89,3 +90,13 @@ type String struct {
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) Inspect() string  { return s.Value }
+
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+	Fn   BuiltinFunction
+	Name string
+}
+
+func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
+func (b *Builtin) Inspect() string  { return b.Name }
