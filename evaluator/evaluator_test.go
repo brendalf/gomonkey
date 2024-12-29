@@ -314,6 +314,8 @@ func TestBuiltinFunctions(t *testing.T) {
 		{input: `last([])`, expected: nil},
 		{input: `rest([1, 2, 3])`, expected: []int64{2, 3}},
 		{input: `rest([])`, expected: nil},
+		{input: `push([1, 2], 3)`, expected: []int64{1, 2, 3}},
+		{input: `push([], 1)`, expected: []int64{1}},
 		{input: `exit(0, 1)`, expected: "wrong number of arguments. got=2, want 0 or 1"},
 		{input: `exit("1")`, expected: "`exit` builtin function doesn't support argument of type STRING"},
 	}
